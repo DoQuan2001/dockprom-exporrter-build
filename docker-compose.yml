@@ -1,0 +1,76 @@
+version: '3.7'
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.32.1
+    restart: unless-stopped
+    
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - my_bridge
+
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: alertmanager
+    volumes:
+      - ./alertmanager:/etc/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    networks:
+      - my_bridge
+
+  nodeexporter:
+    image: prom/node-exporter:v1.3.1
+    ports:
+      - "9100:9100"
+    networks:
+      - my_bridge
+
+  pushgateway:
+    image: prom/pushgateway:v1.4.2
+    restart: unless-stopped
+    ports:
+      - "9091:9091"
+    networks:
+      - my_bridge
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.39.3
+    restart: unless-stopped
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - my_bridge
+    command:
+      - '--port=8080'
+      - '--housekeeping_interval=30s'
+      - '--disable_metrics=tcp,udp'
+      - '--docker_only'
+
+networks:
+  my_bridge:
+    driver: bridge
+
+volumes:
+  prometheus_data: {}

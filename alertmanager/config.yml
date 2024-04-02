@@ -1,0 +1,12 @@
+route:
+  group_by: ['alertname']
+  group_wait: 10s
+  receiver: 'telegram_receiver'
+
+receivers:
+- name: 'telegram_receiver'
+  telegram_configs:
+  - api_url: 'https://api.telegram.org'
+    bot_token: 
+    chat_id:
+   
